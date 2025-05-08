@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>共同創作空間</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <h1>共同創作空間</h1>
+        <div class="user-info">
+            <input type="text" id="username" placeholder="請輸入您的名稱" />
+        </div>
+        <div class="workspace">
+            <div class="sidebar">
+                <div class="online-users">
+                    <h3>在線用戶</h3>
+                    <ul id="users-list"></ul>
+                </div>
+                <div class="chat-box">
+                    <h3>聊天室</h3>
+                    <div id="chat-messages"></div>
+                    <div class="chat-input">
+                        <input type="text" id="chat-message" placeholder="輸入訊息..." />
+                        <button id="send-message">發送</button>
+                    </div>
+                </div>
+            </div>
+            <div class="creation-area">
+                <div class="tools">
+                    <button id="text-tool" type="button">文字</button>
+                    <button id="draw-tool" type="button">繪圖</button>
+                    <div class="drawing-controls">
+                        <input type="color" id="color-picker" value="#000000" title="選擇顏色" />
+                        <input type="range" id="brush-size" min="1" max="20" value="2" step="1" title="筆刷大小" />
+                        <span id="brush-size-label">2px</span>
+                        <div class="shape-tools">
+                            <button id="pen-tool" class="active" type="button" title="畫筆">✏️</button>
+                            <button id="eraser-tool" type="button" title="橡皮擦">🧹</button>
+                            <button id="rect-tool" type="button" title="矩形">⬜</button>
+                            <button id="circle-tool" type="button" title="圓形">⭕</button>
+                            <button id="fill-tool" type="button" title="填充">🎨</button>
+                        </div>
+                        <button id="undo" type="button" title="復原" disabled>↩️</button>
+                        <button id="redo" type="button" title="重做" disabled>↪️</button>
+                        <button id="clear-canvas" type="button">清除畫布</button>
+                        <button id="download" type="button" title="下載">💾</button>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="drawing-board"></canvas>
+                </div>
+                <div class="text-container">
+                    <textarea id="text-area" placeholder="在這裡輸入文字..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入 GUN.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
