@@ -65,9 +65,7 @@ let startX = 0;
 let startY = 0;
 let tempCanvas = null;
 let tempCtx = null;
-
-// 增加可繪製狀態控制
-let canStartNewShape = true;
+let isMouseDown = false;
 
 // 用戶相關
 let username = '';
@@ -182,7 +180,14 @@ function selectTool(toolId) {
     });
     document.getElementById(toolId).classList.add('active');
     currentTool = toolId.replace('-tool', '');
-    canStartNewShape = true; // 切換工具時重置狀態
+    
+    // 重置繪圖狀態
+    isDrawing = false;
+    isDrawingShape = false;
+    isMouseDown = false;
+    
+    // 更新工具設定
+    updateDrawingSettings();
 }
 
 // 工具事件監聽器
@@ -328,10 +333,9 @@ function getTouchPos(touch) {
 
 // 開始繪圖
 function startDrawing(e) {
-    if (!canStartNewShape && ['rect', 'circle'].includes(currentTool)) {
-        return; // 如果不能開始新形狀，而且是形狀工具，則不允許開始
-    }
+    if (e.button !== 0) return; // 只處理左鍵點擊
     
+    isMouseDown = true;
     isDrawing = true;
     const pos = getMousePos(e);
     [lastX, lastY] = [pos.x, pos.y];
@@ -341,7 +345,6 @@ function startDrawing(e) {
         floodFill(startX, startY, colorPicker.value);
     } else if (['rect', 'circle'].includes(currentTool)) {
         isDrawingShape = true;
-        canStartNewShape = false; // 開始畫形狀時設置為 false
         tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
         tempCtx.drawImage(drawingBoard, 0, 0);
     }
@@ -349,11 +352,11 @@ function startDrawing(e) {
 
 // 繪圖過程
 function draw(e) {
-    if (!isDrawing) return;
+    if (!isMouseDown || !isDrawing) return;
     
     const pos = getMousePos(e);
-    const currentX = pos.x;
-    const currentY = pos.y;
+    const currentX = Math.min(Math.max(pos.x, 0), drawingBoard.width);
+    const currentY = Math.min(Math.max(pos.y, 0), drawingBoard.height);
 
     if (['rect', 'circle'].includes(currentTool)) {
         // 繪製形狀預覽
@@ -371,7 +374,6 @@ function draw(e) {
         ctx.lineTo(currentX, currentY);
         ctx.stroke();
         
-        // 使用節流後的同步函數
         throttledSyncStroke({
             fromX: lastX,
             fromY: lastY,
@@ -387,13 +389,25 @@ function draw(e) {
 }
 
 // 結束繪圖
-function stopDrawing() {
+function stopDrawing(e) {
+    if (!isMouseDown) return;
+    
+    isMouseDown = false;
     if (isDrawing && ['rect', 'circle'].includes(currentTool)) {
+        const pos = getMousePos(e);
+        // 最後一次更新形狀位置
+        const finalX = Math.min(Math.max(pos.x, 0), drawingBoard.width);
+        const finalY = Math.min(Math.max(pos.y, 0), drawingBoard.height);
+        
+        if (currentTool === 'rect') {
+            drawRect(startX, startY, finalX - startX, finalY - startY);
+        } else if (currentTool === 'circle') {
+            drawCircle(startX, startY, finalX, finalY);
+        }
         saveState();
     }
     isDrawing = false;
     isDrawingShape = false;
-    // 注意：這裡不重置 canStartNewShape，需要滑鼠再次點擊畫布外面才重置
 }
 
 // 繪製矩形
@@ -543,7 +557,7 @@ canvas.get('clear').on(data => {
 });
 
 // 顏色和筆刷大小變更
-colorPicker.addEventListener('change', updateDrawingSettings);
+colorPicker.addEventListener('input', updateDrawingSettings);
 brushSize.addEventListener('input', updateDrawingSettings);
 
 // 文字共享功能
@@ -603,7 +617,6 @@ function handleMouseOut(e) {
     // 確保臨時畫布與主畫布同步
     tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
     tempCtx.drawImage(drawingBoard, 0, 0);
-    canStartNewShape = true; // 當滑鼠移出畫布時重置狀態
 }
 
 // 錯誤處理函數
@@ -618,11 +631,18 @@ window.addEventListener('load', () => {
         initCanvas();
         textArea.style.display = 'none';
 
-        // 添加畫布事件監聽器
+        // 修改事件監聽器
         drawingBoard.addEventListener('mousedown', startDrawing);
         drawingBoard.addEventListener('mousemove', draw);
-        drawingBoard.addEventListener('mouseup', stopDrawing);
-        drawingBoard.addEventListener('mouseout', handleMouseOut);
+        document.addEventListener('mouseup', stopDrawing); // 改為監聽整個文檔
+        drawingBoard.addEventListener('mouseleave', handleMouseOut);
+        
+        // 顏色選擇器事件監聽
+        colorPicker.addEventListener('input', updateDrawingSettings); // 即時更新顏色
+        colorPicker.addEventListener('change', updateDrawingSettings); // 確認顏色選擇
+        
+        // 防止在拖曳過程中選中文字
+        drawingBoard.addEventListener('selectstart', (e) => e.preventDefault());
 
         // 觸控事件支援
         drawingBoard.addEventListener('touchstart', (e) => {
@@ -671,7 +691,7 @@ window.addEventListener('load', () => {
         // 添加畫布以外區域的點擊事件
         document.addEventListener('click', (e) => {
             if (!drawingBoard.contains(e.target)) {
-                canStartNewShape = true;
+                isMouseDown = false;
             }
         });
 
