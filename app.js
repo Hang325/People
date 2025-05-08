@@ -24,15 +24,12 @@ window.location.hash = roomId;
 const space = gun.get('creative-space-' + roomId);
 const users = space.get('users');
 const canvas = space.get('canvas');
-const text = space.get('text');
 const chat = space.get('chat');
 
 // DOM 元素
 const usernameInput = document.getElementById('username');
 const usersList = document.getElementById('users-list');
 const drawingBoard = document.getElementById('drawing-board');
-const textArea = document.getElementById('text-area');
-const textTool = document.getElementById('text-tool');
 const drawTool = document.getElementById('draw-tool');
 const colorPicker = document.getElementById('color-picker');
 const brushSize = document.getElementById('brush-size');
@@ -560,24 +557,6 @@ canvas.get('clear').on(data => {
 colorPicker.addEventListener('input', updateDrawingSettings);
 brushSize.addEventListener('input', updateDrawingSettings);
 
-// 文字共享功能
-textArea.addEventListener('input', (e) => {
-    const newText = e.target.value;
-    text.put({
-        content: newText,
-        timestamp: Date.now()
-    });
-});
-
-// 接收其他用戶的文字更新
-text.on((data) => {
-    if (data && data.content && data.timestamp) {
-        if (textArea.value !== data.content) {
-            textArea.value = data.content;
-        }
-    }
-});
-
 // 聊天功能
 function sendChatMessage() {
     const message = chatInput.value.trim();
@@ -599,14 +578,7 @@ chatInput.addEventListener('keypress', (e) => {
 });
 
 // 工具切換
-textTool.addEventListener('click', () => {
-    textArea.style.display = 'block';
-    drawingBoard.style.display = 'none';
-    document.querySelector('.drawing-controls').style.display = 'none';
-});
-
 drawTool.addEventListener('click', () => {
-    textArea.style.display = 'none';
     drawingBoard.style.display = 'block';
     document.querySelector('.drawing-controls').style.display = 'flex';
 });
@@ -629,7 +601,6 @@ function handleError(error) {
 window.addEventListener('load', () => {
     try {
         initCanvas();
-        textArea.style.display = 'none';
 
         // 修改事件監聽器
         drawingBoard.addEventListener('mousedown', startDrawing);

@@ -29,8 +29,7 @@
             </div>
             <div class="creation-area">
                 <div class="tools">
-                    <button id="text-tool" type="button">文字</button>
-                    <button id="draw-tool" type="button">繪圖</button>
+                    <button id="draw-tool" type="button" class="active">繪圖</button>
                     <div class="drawing-controls">
                         <input type="color" id="color-picker" value="#000000" title="選擇顏色" />
                         <input type="range" id="brush-size" min="1" max="20" value="2" step="1" title="筆刷大小" />
@@ -50,9 +49,6 @@
                 </div>
                 <div class="canvas-container">
                     <canvas id="drawing-board"></canvas>
-                </div>
-                <div class="text-container">
-                    <textarea id="text-area" placeholder="在這裡輸入文字..."></textarea>
                 </div>
             </div>
         </div>
