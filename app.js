@@ -1,19 +1,18 @@
-// 初始化 GUN
+// 初始化 GUN，使用多個可靠的公共服務器
+const peers = [
+    'https://mvp-gun.herokuapp.com/gun',
+    'https://gun-ams1.maddiex.wtf:443/gun',
+    'https://gun-sjc1.maddiex.wtf:443/gun'
+];
+
 const gun = Gun({
-    localStorage: true, // 啟用本地存儲
-    peers: [], // 不使用外部 peers
-    radisk: false, // 禁用磁碟存儲
-    file: false, // 禁用檔案存儲
-    multicast: true // 啟用多播以支援本地網路
-});
-
-// 添加連接狀態監聽
-gun.on('hi', peer => {
-    console.log('Connected to peer:', peer);
-});
-
-gun.on('bye', peer => {
-    console.log('Disconnected from peer:', peer);
+    peers: peers,
+    localStorage: true,
+    radisk: true,
+    file: false,
+    multicast: false,
+    retry: 3000, // 重試間隔
+    axe: false   // 禁用 WebRTC 以提高穩定性
 });
 
 // 創建一個新的房間ID或使用現有的
@@ -25,6 +24,43 @@ const space = gun.get('creative-space-' + roomId);
 const users = space.get('users');
 const canvas = space.get('canvas');
 const chat = space.get('chat');
+
+// 添加連接狀態監聽和錯誤處理
+let connectedPeers = 0;
+
+gun.on('hi', peer => {
+    connectedPeers++;
+    console.log('Connected to peer:', peer);
+    console.log('Total connected peers:', connectedPeers);
+    updateConnectionStatus(true);
+});
+
+gun.on('bye', peer => {
+    connectedPeers--;
+    console.log('Disconnected from peer:', peer);
+    console.log('Total connected peers:', connectedPeers);
+    updateConnectionStatus(connectedPeers > 0);
+});
+
+gun.on('error', error => {
+    console.error('Gun error:', error);
+});
+
+// 更新連接狀態顯示
+function updateConnectionStatus(isConnected) {
+    const statusElement = document.getElementById('connection-status');
+    const statusMessage = isConnected ? '已連線' : '連線中...';
+    statusElement.textContent = statusMessage;
+    statusElement.className = 'connection-status ' + (isConnected ? 'connected' : 'connecting');
+    console.log('Connection status:', statusMessage);
+}
+    if (connectedPeers > 0) {
+        // 發送心跳包來保持連接
+        space.get('heartbeat').put({
+            timestamp: Date.now()
+        });
+    }
+}, 30000);
 
 // DOM 元素
 const usernameInput = document.getElementById('username');
